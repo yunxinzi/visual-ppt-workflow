@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "project_id": "example-deck",
   "build_id": "draft-001",
   "mode": "editable",
@@ -18,7 +18,8 @@
   "gates": {
     "brief_ready": true,
     "style_selected": false,
-    "artwork_approved": false
+    "artwork_approved": false,
+    "branch_selected": true
   },
   "design_spec": {
     "fonts": [],
@@ -104,6 +105,8 @@
     "next_action": "制作至少8套实际可见风格样板"
   },
   "notes": [
-    "此文件仅是工程状态结构示例，不表示已经生成或用户确认任何图片"
-  ]
+    "此文件仅是工程状态结构示例，不表示已经生成或用户确认任何图片",
+    "示例已选 A；真正新建任务必须先问 A/B。B 项目使用 image-branch-template.json。"
+  ],
+  "workflow_branch": "A"
 }

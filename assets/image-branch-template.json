@@ -1,0 +1,79 @@
+{
+  "schema_version": "1.1",
+  "project_id": "example-image-deck",
+  "build_id": "image-draft-001",
+  "mode": "image",
+  "stage": "image_generate",
+  "brief": {
+    "topic": "样例：低剧透电影推荐",
+    "audience": "课堂同学",
+    "language": "zh-CN",
+    "aspect_ratio": "16:9",
+    "slide_count": 2,
+    "animation_requested": false,
+    "target_app": "not_applicable"
+  },
+  "styleboards": [],
+  "selected_style_id": null,
+  "gates": {
+    "branch_selected": true,
+    "brief_ready": true,
+    "style_selected": false,
+    "artwork_approved": false
+  },
+  "design_spec": {
+    "fonts": [],
+    "palette": [],
+    "reference_locked": false
+  },
+  "slides": [
+    {
+      "id": "slide-01",
+      "intent": "引入主题",
+      "headline": "电影推荐",
+      "reference_image": null,
+      "rendered_image": null,
+      "status": "image_planned",
+      "elements": [],
+      "qa": {
+        "static": "not_tested",
+        "edit": "not_applicable",
+        "animation": "not_applicable",
+        "target_playback": "not_applicable"
+      }
+    },
+    {
+      "id": "slide-02",
+      "intent": "介绍设定",
+      "headline": "关于相遇与距离",
+      "reference_image": null,
+      "rendered_image": null,
+      "status": "image_planned",
+      "elements": [],
+      "qa": {
+        "static": "not_tested",
+        "edit": "not_applicable",
+        "animation": "not_applicable",
+        "target_playback": "not_applicable"
+      }
+    }
+  ],
+  "artifacts": {
+    "images_dir": null,
+    "images_zip": null,
+    "pptx": null,
+    "pdf": null,
+    "preview_dir": null,
+    "qa_report": null
+  },
+  "checkpoint": {
+    "last_saved_at": null,
+    "verified_files": [],
+    "next_action": "直接批量生成有序整页图片；不进入八套预览/全稿审批/分层重构"
+  },
+  "notes": [
+    "示例已选 B，不要求 8 套预览、全套图稿审批、动画或原生PPTX。",
+    "每页 rendered_image 必须在实际生图成功后才能写入；交付前 static QA 必须 pass。"
+  ],
+  "workflow_branch": "B"
+}
