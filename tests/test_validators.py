@@ -36,13 +36,84 @@ class SkillValidationTest(unittest.TestCase):
         manifest['stage'] = 'build'
         self.assertTrue(any('B cannot enter A' in x for x in load('validate_project').validate(manifest)))
 
-    def test_image_branch_delivered_requires_real_images_and_qa(self):
-        manifest = json.loads((ROOT / 'assets/image-branch-template.json').read_text(encoding='utf8'))
+    def b_manifest(self):
+        return json.loads((ROOT / 'assets/image-branch-template.json').read_text(encoding='utf8'))
+
+    def preview_ready(self, manifest):
+        manifest['stage'] = 'b_await_confirmation'
+        manifest['b_previews'] = {
+            'slide_id': manifest['slides'][0]['id'],
+            'B1': 'previews/B1.png',
+            'B2': 'previews/B2.png'
+        }
+        manifest['gates']['b_previews_generated'] = True
+        return manifest
+
+    def confirmed(self, manifest, mode='both'):
+        manifest = self.preview_ready(manifest)
+        manifest['stage'] = 'image_generate'
+        manifest['b_generation_mode'] = mode
+        manifest['gates']['b_variant_confirmed'] = True
+        return manifest
+
+    def test_preview_gate_is_valid_only_after_pair(self):
+        manifest = self.b_manifest()
+        manifest['stage'] = 'b_await_confirmation'
+        self.assertTrue(load('validate_project').validate(manifest))
+        self.assertEqual(load('validate_project').validate(self.preview_ready(manifest)), [])
+
+    def test_preview_must_use_two_distinct_files(self):
+        manifest = self.preview_ready(self.b_manifest())
+        manifest['b_previews']['B2'] = manifest['b_previews']['B1']
+        self.assertTrue(any('distinct' in err for err in load('validate_project').validate(manifest)))
+
+    def test_b_cannot_batch_without_user_choice(self):
+        manifest = self.preview_ready(self.b_manifest())
+        manifest['stage'] = 'image_generate'
+        self.assertTrue(any('user confirmation' in err for err in load('validate_project').validate(manifest)))
+
+    def test_default_both_requires_explicit_confirmation(self):
+        manifest = self.preview_ready(self.b_manifest())
+        manifest['b_generation_mode'] = 'both'
+        self.assertTrue(any('wait for user confirmation' in err for err in load('validate_project').validate(manifest)))
+        self.assertEqual(load('validate_project').validate(self.confirmed(self.b_manifest())), [])
+
+    def test_image_branch_delivered_requires_both_decks_and_qa(self):
+        manifest = self.confirmed(self.b_manifest())
         manifest['stage'] = 'image_delivered'
         self.assertTrue(load('validate_project').validate(manifest))
         for slide in manifest['slides']:
-            slide['rendered_image'] = f"images/{slide['id']}.png"
-            slide['qa']['static'] = 'pass'
+            slide['prompt_base'] = f"完整页内容及比例: {slide['id']}"
+            for variant in ('B1', 'B2'):
+                slide['variant_images'][variant] = f"{variant}/{slide['id']}.png"
+                slide['variant_qa'][variant] = 'pass'
+                slide['variant_prompts'][variant] = slide['prompt_base'] + ('\\n' + load('validate_project').B2_QUALITY_CONSTRAINT if variant == 'B2' else '')
+        self.assertEqual(load('validate_project').validate(manifest), [])
+
+    def test_one_branch_only_needs_its_own_deck(self):
+        manifest = self.confirmed(self.b_manifest(), 'B1')
+        manifest['stage'] = 'image_delivered'
+        for slide in manifest['slides']:
+            slide['prompt_base'] = f"Page: {slide['id']}"
+            slide['variant_images']['B1'] = f"B1/{slide['id']}.png"
+            slide['variant_qa']['B1'] = 'pass'
+            slide['variant_prompts']['B1'] = slide['prompt_base']
+        self.assertEqual(load('validate_project').validate(manifest), [])
+
+    def test_b2_constraint_has_to_be_exact(self):
+        manifest = self.confirmed(self.b_manifest(), 'B2')
+        manifest['stage'] = 'image_delivered'
+        for slide in manifest['slides']:
+            slide['prompt_base'] = f"Page: {slide['id']}"
+            slide['variant_images']['B2'] = f"B2/{slide['id']}.png"
+            slide['variant_qa']['B2'] = 'pass'
+            slide['variant_prompts']['B2'] = slide['prompt_base'] + '\\n' + 'over-sharpened HDR'
+        self.assertTrue(any('prompt policy mismatch' in e for e in load('validate_project').validate(manifest)))
+
+    def test_legacy_v21_b_manifest_is_accepted(self):
+        manifest = self.b_manifest()
+        manifest['schema_version'] = '1.1'
+        manifest['stage'] = 'image_generate'
         self.assertEqual(load('validate_project').validate(manifest), [])
 
     def test_a_animation_requirement_mismatch(self):

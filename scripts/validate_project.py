@@ -9,7 +9,9 @@ import sys
 from pathlib import Path
 
 STAGES_A = ('brief', 'styles', 'selected', 'pilot', 'artwork', 'approved', 'build', 'qa', 'delivered')
-STAGES_B = ('image_generate', 'image_qa', 'image_delivered')
+STAGES_B = ('b_preview', 'b_await_confirmation', 'image_generate', 'image_qa', 'image_delivered')
+B_OPTIONS = ('B1', 'B2', 'both')
+B2_QUALITY_CONSTRAINT = "画面保持干净自然的真实照片质感：不要数字噪点与彩色噪点，不要颗粒覆盖，不要过度锐化，不要 HDR 与油腻高光，不要蜡质表面，不要脏灰色调，不要假细节与压缩伪影。"
 STAGES = ('route',) + STAGES_A + STAGES_B
 MODES = ('editable', 'image', 'hybrid', 'review', 'pdf-only')
 KINDS = ('background', 'native_text', 'native_shape', 'native_chart', 'native_table', 'independent_image', 'flattened_page')
@@ -65,12 +67,58 @@ def validate(project):
             errors.append('B must have animation_requested=false')
         if gates.get('style_selected') or gates.get('artwork_approved'):
             errors.append('B must not claim A-only style/artwork gates')
-        if stage == 'image_delivered':
-            for item in slides:
-                if not item.get('rendered_image'):
-                    errors.append(f'B image_delivered requires rendered_image for {item.get("id")}')
-                if item.get('qa', {}).get('static') != 'pass':
-                    errors.append(f'B image_delivered requires static QA pass for {item.get("id")}')
+        # Preserve validation of work already started under v2.1; do not retroactively
+        # demand a preview gate for old projects that are being resumed.
+        if project.get('schema_version') == '1.1':
+            if stage == 'image_delivered':
+                for item in slides:
+                    if not item.get('rendered_image'):
+                        errors.append(f'legacy B image_delivered requires rendered_image for {item.get("id")}')
+                    if item.get('qa', {}).get('static') != 'pass':
+                        errors.append(f'legacy B image_delivered requires static QA pass for {item.get("id")}')
+        else:
+            if project.get('schema_version') != '1.2':
+                errors.append('B workflow requires schema_version 1.2 (or 1.1 legacy)')
+            previews = project.get('b_previews')
+            if not isinstance(previews, dict):
+                errors.append('B requires b_previews object')
+                previews = {}
+            mode = project.get('b_generation_mode')
+            if mode not in (*B_OPTIONS, None):
+                errors.append('B b_generation_mode must be B1, B2, both, or null')
+            if stage in ('b_await_confirmation', 'image_generate', 'image_qa', 'image_delivered'):
+                if not gates.get('b_previews_generated'):
+                    errors.append('B requires both preview images before confirmation or generation')
+                if not all(isinstance(previews.get(k), str) and previews.get(k) for k in ('slide_id','B1','B2')):
+                    errors.append('B paired previews require the same slide_id and separate B1/B2 image paths')
+                if previews.get('B1') and previews.get('B1') == previews.get('B2'):
+                    errors.append('B paired previews must be distinct image paths')
+            if stage in ('route', 'b_preview', 'b_await_confirmation'):
+                if gates.get('b_variant_confirmed') or mode is not None:
+                    errors.append('B must wait for user confirmation after paired preview before choosing a variant')
+            if stage in ('image_generate', 'image_qa', 'image_delivered'):
+                if not gates.get('b_variant_confirmed') or mode not in B_OPTIONS:
+                    errors.append('B cannot batch generate before explicit B1/B2/both user confirmation')
+            if stage == 'image_delivered' and mode in B_OPTIONS:
+                variants = ('B1','B2') if mode == 'both' else (mode,)
+                for slide in slides:
+                    sid = slide.get('id')
+                    base = slide.get('prompt_base')
+                    paths = slide.get('variant_images') or {}
+                    checks = slide.get('variant_qa') or {}
+                    prompts = slide.get('variant_prompts') or {}
+                    for variant in variants:
+                        path = paths.get(variant)
+                        if not isinstance(path,str) or not path:
+                            errors.append(f'B image_delivered requires {variant} image for {sid}')
+                        elif not path.replace('\\\\','/').startswith(variant+'/'):
+                            errors.append(f'B {variant} image for {sid} must be stored under {variant}/')
+                        if checks.get(variant) != 'pass':
+                            errors.append(f'B image_delivered requires {variant} QA pass for {sid}')
+                        if not isinstance(base, str) or not base:
+                            errors.append(f'B image_delivered requires prompt_base for {sid}')
+                        elif prompts.get(variant) != base + (('\\n' + B2_QUALITY_CONSTRAINT) if variant == 'B2' else ''):
+                            errors.append(f'B {variant} prompt policy mismatch for {sid}')
     ids = set()
     for idx, slide in enumerate(slides, 1):
         name = f'slides[{idx}]'

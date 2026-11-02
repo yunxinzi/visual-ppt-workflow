@@ -1,9 +1,9 @@
 {
-  "schema_version": "1.1",
+  "schema_version": "1.2",
   "project_id": "example-image-deck",
   "build_id": "image-draft-001",
   "mode": "image",
-  "stage": "image_generate",
+  "stage": "b_preview",
   "brief": {
     "topic": "样例：低剧透电影推荐",
     "audience": "课堂同学",
@@ -19,7 +19,9 @@
     "branch_selected": true,
     "brief_ready": true,
     "style_selected": false,
-    "artwork_approved": false
+    "artwork_approved": false,
+    "b_previews_generated": false,
+    "b_variant_confirmed": false
   },
   "design_spec": {
     "fonts": [],
@@ -40,6 +42,19 @@
         "edit": "not_applicable",
         "animation": "not_applicable",
         "target_playback": "not_applicable"
+      },
+      "prompt_base": null,
+      "variant_prompts": {
+        "B1": null,
+        "B2": null
+      },
+      "variant_images": {
+        "B1": null,
+        "B2": null
+      },
+      "variant_qa": {
+        "B1": "not_tested",
+        "B2": "not_tested"
       }
     },
     {
@@ -55,6 +70,19 @@
         "edit": "not_applicable",
         "animation": "not_applicable",
         "target_playback": "not_applicable"
+      },
+      "prompt_base": null,
+      "variant_prompts": {
+        "B1": null,
+        "B2": null
+      },
+      "variant_images": {
+        "B1": null,
+        "B2": null
+      },
+      "variant_qa": {
+        "B1": "not_tested",
+        "B2": "not_tested"
       }
     }
   ],
@@ -64,16 +92,30 @@
     "pptx": null,
     "pdf": null,
     "preview_dir": null,
-    "qa_report": null
+    "qa_report": null,
+    "variant_dirs": {
+      "B1": null,
+      "B2": null
+    },
+    "preview_B1": null,
+    "preview_B2": null
   },
   "checkpoint": {
     "last_saved_at": null,
     "verified_files": [],
-    "next_action": "直接批量生成有序整页图片；不进入八套预览/全稿审批/分层重构"
+    "next_action": "针对同一代表性页面独立生成 B1/B2 两张预览，向用户展示并等待选择仅B1、仅B2或默认双版本；确认前禁止批量生图"
   },
   "notes": [
-    "示例已选 B，不要求 8 套预览、全套图稿审批、动画或原生PPTX。",
-    "每页 rendered_image 必须在实际生图成功后才能写入；交付前 static QA 必须 pass。"
+    "此模板为 v2.2 B 分支：需要真实生成一张相同内容页的 B1 无内置视觉约束及 B2 固定照片质感约束两张预览。",
+    "两图展示后提示：可选择仅开始 B1 分支或者仅开始 B2 分支，默认是同时开始 B1 和 B2 生成。",
+    "预览未展示且用户未确认时，b_generation_mode 必须为 null，不能因默认 both 而提前生图。",
+    "确认 both 时每页需要 B1 和 B2 两张独立图，分别保存于 B1/、B2/，QA 独立验收。"
   ],
-  "workflow_branch": "B"
+  "workflow_branch": "B",
+  "b_generation_mode": null,
+  "b_previews": {
+    "slide_id": null,
+    "B1": null,
+    "B2": null
+  }
 }
