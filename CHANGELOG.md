@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.2.0] - 2026-11-02
+
+- B branch now **requires two paired previews of the same representative slide** before any full-deck generation.
+- B1 adds **no built-in visual style/quality constraints** beyond the user's own content and essential page specifications; B2 appends the user's exact natural-photographic-finish restriction.
+- New user-confirmation Gate: B1 only, B2 only, or both full decks by default **after user confirms**. Selection B alone does not authorize batching.
+- In `both` mode, generate and QA **two complete independent decks** (2 × slide count), saved separately in `B1/` and `B2/`.
+- Added `b_preview` and `b_await_confirmation` states, schema 1.2, prompt provenance, and new branch-specific validation tests; preserves legacy 1.1 ongoing B projects.
+
+
+
 ## [2.1.0] - 2026-11-02
 
 - Added a mandatory **A/B animation decision** before creating any new PPT: A = original editable/animated workflow; B = directly batch-generate complete slide images.

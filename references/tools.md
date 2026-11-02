@@ -3,7 +3,7 @@
 脚本均使用 Python 3.10+，除图像对比脚本外只依赖标准库。
 
 - `scripts/validate_skill.py`: 检查 Agent Skills 元信息、内部相对链接和基础目录结构；不代表平台官方认证。
-- `scripts/validate_project.py`: 检查 project.json schema、A/B 分支选择与对应阶段门槛、素材映射，属于**声明一致性检查**，不等于用户真的确认过。B 模板见 `assets/image-branch-template.json`。
+- `scripts/validate_project.py`: 检查 project.json schema、A/B 分支选择与对应阶段门槛、素材映射，属于**声明一致性检查**，不等于用户真的确认过。B 模板见 `assets/image-branch-template.json`（schema 1.2）。新建 B 必须经双预览确认 Gate，脚本检查所声明的 B1/B2 图片、提示词来源和每版本 QA；但仅凭路径字段仍不能证明图片真的存在或预览真的被用户看到。
 - `scripts/audit_pptx.py`: 解析 PPTX ZIP/XML，统计页面对象、文本框、图片和动画结构；可标记整页一图与空白。无法证明图片真透明、字体匹配、背景无残影、在 WPS 可编辑或动画可播放。
 - `scripts/compare_renders.py`: 比较两张等尺寸渲染图，输出绝对误差热力图与MAE。需要 `Pillow`（可 `pip install Pillow`）；视觉数值只辅助人审。
 
