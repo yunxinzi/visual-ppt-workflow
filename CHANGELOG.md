@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.3.0] - 2026-11-02
+
+- Integrated 29 approved audit decisions into the normative workflow and new [policy matrix](references/upgrade-policy-v2.3.md).
+- Routing now uses **animation OR element-level editability**, allowing A with no animation; B requires neither.
+- A enforces risk-based content outline review, eight style previews (8 or 16 example images), full artwork approval, visual fidelity, actual requested animation or explicitly approved downgrade, and PPTX+PDF+previews+overview by default.
+- B supports revisable paired previews, identical base prompts and unchanged B2 quality sentence with art-style protection, independent variant QA, adaptive typography and resolution, **PNG+ZIP+flattened PPTX per selected variant** by default.
+- Added batch checkpoint/readback, severity-based repair, adaptive concurrency, permission-aware tool switching, font/safe-area QA, incremental version synchronization and graded validation boundaries.
+- Updated templates and regression checks for v2.3 delivery and route semantics; prior B schemas can resume without repeated approvals.
+
+
+
 ## [2.2.0] - 2026-11-02
 
 - B branch now **requires two paired previews of the same representative slide** before any full-deck generation.
