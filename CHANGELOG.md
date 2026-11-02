@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.1.0] - 2026-11-02
+
+- Added a mandatory **A/B animation decision** before creating any new PPT: A = original editable/animated workflow; B = directly batch-generate complete slide images.
+- **B bypasses** all original eight-style previews, pilot layering, full-deck artwork approval, editable reconstruction, and animation QA.
+- Added explicit image-only output caveat: high-quality page images by default, optional flattened PPTX/PDF only on request; no element editability or animation.
+- Added independent B state machine (`image_generate → image_qa → image_delivered`), route gates, B project template, and branch validation tests.
+- Preserved the A workflow intact after the branch decision; excluded ongoing/review tasks from redundant branch selection.
+
+
 ## [2.0.0] - 2026-11-01 (release candidate)
 
 - Migrated the full V1.9 workflow into a portable Agent Skills `SKILL.md` with focused reference files.

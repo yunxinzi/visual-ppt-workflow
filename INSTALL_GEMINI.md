@@ -15,7 +15,7 @@ gemini skills install https://github.com/yunxinzi/visual-ppt-workflow.git
 Gemini Apps 已支持 Skills，但**仅粘贴 GitHub 链接不等于自动注册持久 Skill**。
 
 1. 在 https://gemini.google.com 打开 `Customize → Skills → Create → Upload`。
-2. 上传 `Suxing-PPT-Skill-Gemini-Import.zip`，它的根目录就是 `SKILL.md`、`references/` 等。
+2. 下载此仓库源代码，把仓库内的 `SKILL.md`、`references/` 等文件作为 ZIP 根目录重新打包后上传（不要再使用旧名称的 ZIP 文件）。
 3. 审核说明并点击创建，确保 Skill 已启用。
 4. 在新对话中输入“使用 visual-ppt-workflow 制作 PPT”，或通过 `/` 选择 Skill。
 
@@ -29,7 +29,7 @@ Gemini Apps 已支持 Skills，但**仅粘贴 GitHub 链接不等于自动注册
 
 - Skill 列表存在 `visual-ppt-workflow`，不是仅能打开 GitHub 页面。
 - 激活后可读取 SKILL.md、references 等关联文件。
-- 测试“课堂 12 页 PPT”应从需求澄清及 8 套真实风格预览开始，选版之前不能假称完整稿已完成。
+- 测试“课堂 12 页 PPT”必须**先问 A/B**；选择 A 后才给 8 套真实风格预览，选择 B 则应跳过 8 套预览、全稿审批和可编辑拆分，直接批量生图。
 - 必须明确区分纯图片版与真实可编辑 PPTX、结构测试与实播测试。
 
 ## Google 官方文档
