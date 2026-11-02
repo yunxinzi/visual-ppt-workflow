@@ -1,74 +1,45 @@
-# Visual PPT Workflow
+# Visual PPT Workflow v2.3.0
 
-**An A/B-routed Agent Skill for animated editable presentations OR direct high-quality slide images.**
+**高质量 PPT Agent Skill：由用户审核的 29 项执行规则，A/B 分支、双预览、强质量门禁与可恢复交付。**
 
-[简体中文](#中文说明) · [English](#english) · [Gemini 安装指南](INSTALL_GEMINI.md) · [Agent Skill 规范](SKILL.md)
+[Skill 主规范](SKILL.md) · [29 项决策矩阵](references/upgrade-policy-v2.3.md) · [Gemini 安装说明](INSTALL_GEMINI.md) · [English](README_EN.md)
 
-## 中文说明
+## 先选择是否需要动画或逐元素编辑
 
-这是基于真实 PPT 制作迭代经验的开源 Agent Skill。**新建 PPT 前先选 A/B；A 保留原完整流程，B 先生成同一代表页的 B1（无内置画质约束）和 B2（固定真实照片质感约束）两张预览，经用户确认后仅生成 B1、仅生成 B2，或默认同时生成两套完整图片。** 两种路线各有独立交付和验收规则。
+新建 PPT 只问一个问题：
 
-> 注意：它是**工作流与验收标准**，不是独立的图片生成模型或 PowerPoint 引擎。实际生图、PPTX 拼装、动画和实播测试取决于你使用的 Agent 工具；不得虚构未完成的步骤。
+> **本次 PPT 是否需要动画效果，或需要后期编辑文字、图形等元素？**
 
-### 核心改动：先选 A / B
+- **A：其中任何一项需要。** 依次 DEFINE → EXPLORE（8 套真正不同的图稿，普通 8 张/重要 16 张）→ PILOT → ARTWORK（用户确认全部定稿）→ REBUILD（视觉保真、普通文字可编辑、按需真实动画）→ VERIFY → DELIVER。
+- **B：两者都不需要。** 先**独立真实生成**同一代表页的 B1（无 Skill 附加画质句）与 B2（同基础提示词仅追加固定画质句）两张预览；用户不满意可共同调整基线并重做两张。两图展示后由用户确认 B1、B2 或 both，之后才批量生成。
 
-每个新建 PPT 任务在任何制作动作之前，先向用户询问：
+B2 追加句原文，不得改变：
 
-> **本次 PPT 是否需要做动效或动画？**
->
-> **A｜需要动画**：进入原流程，包含 8 套真实风格预览、人工选版、完整图稿审核、真分层可编辑 PPTX、动画与逐页 QA。
->
-> **B｜不需要动画**：先对同一页生成两张独立预览——B1 不添加任何 Skill 内置画质/风格约束，B2 追加一条固定的自然真实照片质感约束。展示后询问**仅 B1 / 仅 B2 / 同时 B1+B2（默认）**；**必须得到用户确认才批量生图**。跳过 A 的八套选版、全稿审批、分层与动画；纯图片不能逐元素编辑。
+> 画面保持干净自然的真实照片质感：不要数字噪点与彩色噪点，不要颗粒覆盖，不要过度锐化，不要 HDR 与油腻高光，不要蜡质表面，不要脏灰色调，不要假细节与压缩伪影。
 
-用户已有明确分支选择或正在续作时不重问，审阅/修订已有文件也不重复选择。详细见 [分支路由](references/branch-routing.md) 和 [B 直接生图](references/image-fast-path.md)。
+B2 在动漫、水墨等题材中保持用户指定风格，不强制变摄影图。
 
-### B 子分支：两张同页对照 + 二次确认
+**A 默认交付：可编辑 PPTX＋静态 PDF＋逐页预览＋总览图**；工程素材按需。需要动画时必须尽力真实实装；不能未经同意降级为说明表或静态版。
 
-1. B1：同样的主题、文案、比例和生成工具，**不添加 Skill 内置视觉画质约束**。
-2. B2：在与 B1 相同的基础提示词末尾完整追加：
-   > 画面保持干净自然的真实照片质感：不要数字噪点与彩色噪点，不要颗粒覆盖，不要过度锐化，不要 HDR 与油腻高光，不要蜡质表面，不要脏灰色调，不要假细节与压缩伪影。
-3. 显示同一页的 B1/B2 两张独立预览图后，固定显示：
-   > 可选择仅开始 B1 分支或者仅开始 B2 分支，默认是同时开始 B1 和 B2 生成。
-4. **等待用户确认**。仅 B1 或仅 B2 = 完整一套；双版本（默认、确认后）= 两套完整 PPT 图片，分别输出 `B1/` 和 `B2/`，每套独立 QA。
+**B 默认交付：每个选定版本的高清 PNG 全套＋ZIP＋纯图片 PPTX**；`both` 是两套完整且独立 QA 的成品，图片版不能逐元素修改或承载原生动画；PDF 按需。
 
-[二级分支规范](references/image-fast-path.md) · [B1/B2 状态与确认 Gate](references/branch-routing.md)
+## 执行质量要求
 
-### Gemini CLI 一条命令安装
+用同一 `project.json` 保存用户确认、每批状态、文件哈希及 `build_id`；中断恢复核对真实文件，不重造已验收内容。重要数据与学术事实严格核验。图稿符合统一视觉语言但各页有创意差异。字体兼顾审美/许可/跨平台兼容；重要文字和数据位于安全区，背景允许出血；B 普通展示目标不低于 1080P，重要大屏优先 4K。最终实物检查黑块、错字、空页、错位、拉伸及导出差异。
+
+Agent 可自主使用工具、调整并发与切换修复方案，但安装授权/付费/敏感权限/关键功能降级需用户批准。**脚本静态检查不能代替真实 PPTX 编辑或动画实播。**
+
+## 安装
+
+Gemini CLI：
 
 ```bash
 gemini skills install https://github.com/yunxinzi/visual-ppt-workflow.git
 ```
 
-Gemini CLI 安装后运行 `/skills list` 验证，并在使用时批准技能激活。详细操作见 [INSTALL_GEMINI.md](INSTALL_GEMINI.md)。
+Gemini 网页版按 [安装说明](INSTALL_GEMINI.md) 将仓库以 SKILL.md 在根目录的 ZIP 导入 Skills；仅发送 GitHub 链接不等于已安装。其他 Agent 使用兼容的 Skill 目录，明确检测其支持的图片/PPTX/实播能力。
 
-### Gemini 网页版
-
-Gemini Apps 支持上传包含根目录 `SKILL.md` 的 ZIP 来创建 Skill。**在网页聊天中粘贴 GitHub 链接不等于持久安装。** 下载此仓库并将所有文件打包（`SKILL.md` 必须处于 ZIP 根目录），在 `Customize → Skills → Create → Upload` 上传。
-
-### 使用方式
-
-直接告诉支持 Skill 的 Agent：“为我制作一份关于 XXX 的 12 页 PPT，启用 visual-ppt-workflow。请先问我是否需要动画，让我选择 A 或 B。”  
-
-主要流程：**ROUTE A/B**；A：**DEFINE → EXPLORE → PILOT → ARTWORK → REBUILD → VERIFY → DELIVER**；B：**B1/B2_PREVIEW → CONFIRM → IMAGE_GENERATE → IMAGE_QA → IMAGE_DELIVER**
-
-### 支持模式
-
-- `A/editable`：A 的默认模式，可编辑原生文字、简单对象与独立前景。
-- `B/image`：先双预览与用户确认，然后按选定 B1/B2/both 交付 1 套或 2 套图片集；用户如需 PPTX，仅封装图片，声明不具有逐元素编辑性。
-- `hybrid`：背景图片加可编辑文字与前景素材。
-- `review`：已有幻灯片质量审查和局部优化。
-- `pdf-only`：明确只需 PDF 时可直接交付该格式。
-
-### 目录说明
-
-- [SKILL.md](SKILL.md)：入口与不可跳过的阶段 Gate。
-- [references/](references/)：视觉、分层、动画、验收与恢复规范。
-- [scripts/](scripts/)：辅助结构审核及图像差异检测。
-- [tests/](tests/)：标准库单元测试。
-- [history/](history/)：原始工作流演进历史（供追溯，非现行规范）。
-- [GEMINI_CHAT_PROMPT.md](GEMINI_CHAT_PROMPT.md)：可复制的安装提示词。
-
-### 基础校验
+## 自动化测试
 
 ```bash
 python3 scripts/validate_skill.py .
@@ -77,18 +48,6 @@ python3 scripts/validate_project.py assets/image-branch-template.json
 python3 -m unittest discover -s tests -v
 ```
 
-## English
+测试验证目录/状态/规则约束，不虚称验证了实物视觉质量。重大流程升级要求额外真实生成受影响分支的 PPT 作为集成验证；未运行需明确披露。
 
-An Agent Skills compatible presentation workflow. **Before a new deck, ask A (animated editable workflow) or B (static slide images). B generates two independent previews of the same page: B1 adds no built-in quality/style constraints; B2 appends an exact fixed natural-photograph quality constraint. Present both previews and wait for user confirmation: B1 only, B2 only, or both full decks (default only AFTER explicit confirmation).** No A-specific styleboard/rebuild pipeline in B. Images are not element-editable.
-
-**Install for Gemini CLI:**
-
-```bash
-gemini skills install https://github.com/yunxinzi/visual-ppt-workflow.git
-```
-
-For Gemini web, import a ZIP with `SKILL.md` at its root. Refer to [INSTALL_GEMINI.md](INSTALL_GEMINI.md) for setup and limitations.
-
-## License
-
-[MIT](LICENSE).
+MIT License.

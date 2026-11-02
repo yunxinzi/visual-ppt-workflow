@@ -1,5 +1,5 @@
-# 发给 Gemini CLI 或 Antigravity 的安装请求（复制整段）
+# 发送给支持 Agent Skills 的 Gemini / Codex（复制整段）
 
-请安装公开的 GitHub Agent Skill：https://github.com/yunxinzi/visual-ppt-workflow 。它的入口为 `SKILL.md`，Skill 名称为 `visual-ppt-workflow`。若你使用 Gemini CLI，执行 `gemini skills install https://github.com/yunxinzi/visual-ppt-workflow.git`；若使用 Antigravity，请按官方 Skills 目录放置。安装前让我审核权限和来源。完成后用技能列表确认成功，加载 SKILL.md 与所需 references，报告当前真正可用和缺失的图片生成、PPTX 编辑、渲染、动画与实播工具。不允许声称未验证的事情。然后我会提供 PPT 主题。请先问我是否需要动画，要求明确选择 A 或 B；A 再按原七阶段执行，B 不进入原七阶段；须先为同一页生成 B1（无额外内置视觉约束）和 B2（追加固定自然真实照片质感约束）两张真实预览并展示，随后等待我确认仅 B1、仅 B2，或者默认双版本同时生成，不能先生成整套图片。
+请安装或读取 https://github.com/yunxinzi/visual-ppt-workflow 的 **v2.3.0** Skill，入口是根目录 SKILL.md，优先按其 29 项已确认决策执行，不得使用旧版 A/B 路由规则。Gemini CLI 可执行 `gemini skills install https://github.com/yunxinzi/visual-ppt-workflow.git`，如涉及额外安装和权限先征得我的批准；Gemini 网页版必须以 ZIP 导入 Skills，粘贴链接不等于安装。
 
-**说明：** Gemini 网页版请使用 Skills 导入 ZIP 的方式。聊天中阅读 GitHub 链接不等于安装持久 Skill。
+完成加载后先核实本环境实际可用的生图、PPTX、PDF、文字、文件保存及动画播放工具，如缺失不要冒充具备。每次新建 PPT，若尚未明确要求，请只问我一个组合问题：“本次 PPT 是否需要动画效果，或需要后期编辑文字、图形等元素？”需要任一项走 A，无需两项才走 B。A 需 8 套不同风格预览、完整图稿审批、尽量保真且真正可编辑的 PPTX；如要求动画，必须实装或获得我的降级批准。B 先生成同一页 B1/B2 两张真实对照预览，反复修改两张直至满意，随后由我明确选择仅 B1/仅 B2/同时 both，才能批量。B 默认交付每套 PNG＋ZIP＋纯图片 PPTX，不做分层。按批准的分支执行自适应批次、真实 QA、断点回读和版本一致性，不能假称文件/播放已经验证。

@@ -1,21 +1,23 @@
-# Visual PPT Workflow
+# Visual PPT Workflow v2.3.0
 
-An [Agent Skills](https://agentskills.io/specification) compatible **two-branch workflow and QA toolkit** for slide creation. Every **new** presentation request first asks: **A — need animation?** Follow the original full workflow (8 style previews, approval, editable rebuild, animation). **B — no animation?** First create TWO independent previews of the SAME slide: B1 without any built-in visual quality/style additions, B2 with the exact built-in natural photographic finish constraint. Ask for confirmation of B1 only, B2 only, or **both complete decks (default after confirmation)**. Only then batch-generate and QA each selected deck; do not run A-specific eight-style or editable-rebuild gates. Image slides are not element-editable.
+Agent Skill for reliable, high-fidelity presentation creation. [Chinese reference](SKILL.md) · [Reviewed policy matrix](references/upgrade-policy-v2.3.md).
 
-**This is not a turnkey AI slide generator.** It ships instructions, reference documents, and small standard-library audit utilities. Your agent must supply actual image-generation, PPTX editing/rendering, and PowerPoint/WPS playback tools. Do not claim validation that did not occur.
+**Route on animation OR element-level editability:** if either is required use **A**, including when editable slides need no animation. If neither is needed use **B**. For new ambiguous requests ask a single combined question; never infer B from silence about animation. Resume existing projects without repeating approved decisions.
 
-Workflow: **ROUTE → A: DEFINE → EXPLORE → PILOT → ARTWORK → REBUILD → VERIFY → DELIVER**, or **B: PAIRED_PREVIEW → USER_CONFIRM → IMAGE_GENERATE → IMAGE_QA → IMAGE_DELIVER**. The eight-style and artwork approval gates apply to A only; B still has its own mandatory paired-preview/user-confirmation gate. Do not re-ask if a branch has already been chosen, or for review-only tasks. A flattened image PPTX/PDF is optional for B, not automatic.
+**A:** DEFINE → EXPLORE (eight distinct visual approaches: one sample each for ordinary decks, cover+content each for important decks) → PILOT (internal complex-slide test) → ARTWORK (approve all final slide images) → REBUILD (visual fidelity first; ordinary text editable; animation subjects independent) → VERIFY → DELIVER. Actual animation implementation is required when requested; degradation needs explicit user approval. Default: editable PPTX, static PDF, per-slide previews and overview; source package on demand.
 
-Install by copying `visual-ppt-workflow/` into a supported Agent Skills directory (e.g., `.agents/skills/`). Read `SKILL.md` for the executable instructions. The full Chinese README explains the available modes: editable, image-only, hybrid, PDF-only, and review.
+**B:** Generate **two real independent previews of the same representative slide**. B1 does not add Skill-invented quality/style constraints. B2 appends the unchanged fixed Chinese quality sentence from [B workflow](references/image-fast-path.md) to the identical base prompt. Preserve user-requested anime/ink style instead of forcing photography. If dissatisfied, revise the shared prompt and regenerate **both** previews. Only after showing both ask for B1, B2 or both (default only after confirmation). Generate each page of each selected deck independently. Default deliverables **for each variant**: full-resolution PNG slides, ZIP, **flattened image-only PPTX**. No element editing or native animation; optional PDF on request.
+
+**Shared:** risk-adjusted fact checks, accurate Chinese text, adaptive 1080p/4K targets, fonts and safe areas, consistent design language with page-specific layouts, batch checkpoints with real file readback, incremental regeneration, independent B1/B2 versions, adaptive concurrency, authorized tool changes, and no unapproved loss of functionality. Never equate static XML checks with real PowerPoint/WPS playback.
+
+### Install / validate
 
 ```bash
+gemini skills install https://github.com/yunxinzi/visual-ppt-workflow.git
 python3 scripts/validate_skill.py .
 python3 scripts/validate_project.py assets/project-template.json
 python3 scripts/validate_project.py assets/image-branch-template.json
 python3 -m unittest discover -s tests -v
-python3 scripts/audit_pptx.py /path/to/slides.pptx --mode editable
 ```
 
-The PPTX tool is a structural risk scan, not a fidelity or editability certification; use actual target-application testing before asserting real compatibility.
-
-License: MIT. Third-party assets must be licensed separately.
+This is a workflow/validation Skill, not a standalone image generation or Office rendering engine. Integration tests are not guaranteed by static tests. MIT.

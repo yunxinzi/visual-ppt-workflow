@@ -20,9 +20,9 @@ workspace/<project_id>/
 素材引用用相对路径；同一构建版本绑定同一 `build_id`。保存每个产物的 SHA-256，禁止拿旧 PDF/图片冒充最新 PPTX 的导出。可选 `manifest` 字段记录 `build_id`, `source_build_id`, `renderer`, `export_timestamp`, `actual_verification`。
 
 ## 各模式交付
-- `workflow_branch=B`: 先双预览并由用户确认 B1/B2/both，再交付指定的一套或两套有序高清图片；both 需要两个独立版本目录与独立 QA；除非用户要求，否则不生成 PPTX/PDF，也不需要 A 的分层工程包。
-- `editable`: 真实可编辑 `.pptx`、全页预览；按需 `.pdf`、可重建素材和动画描述。
-- `image`（A 的图片模式或 B）：逐页图片是 B 的默认交付；仅在明确需要时封装为纯图片 `.pptx`（按需 PDF），必须明确“不能分层编辑”，禁止夸大。
+- `workflow_branch=B`: 先双预览并由用户确认 B1/B2/both，再交付指定的一套或两套有序高清图片；both 需要两个独立版本目录与独立 QA；**必须同时生成 PNG 逐页图集、ZIP、纯图片 PPTX；** PDF 按用户额外要求。无需 A 分层工程包。
+- `editable`: 真实可编辑 `.pptx`、静态 `.pdf`、全页预览和总览图；按需可重建素材和动画描述。
+- `image`（A 的图片模式或 B）：B 默认同时交付逐页 PNG、ZIP 和纯图片 `.pptx`（PDF 按需），必须明确“不能分层编辑”，禁止夸大。
 - `hybrid`: `.pptx` 与按页的编辑性边界表，明确 `flattened` 素材。
 - `pdf-only`: PDF 与按需预览，不声称 PPTX 已有。
 - `review`: QA报告、已修改文件和差异说明；修改后仍执行受影响页面验证。
@@ -42,4 +42,13 @@ workspace/<project_id>/
   qa-report.json           # 各版本独立检查结果
 ```
 
-推荐使用 `assets/image-branch-template.json`（schema 1.2）；`gates.b_previews_generated` 表示两张预览实际生成，`gates.b_variant_confirmed` 表示用户看过预览并批准具体生成范围。不得在确认前为默认 both 预置已批准状态。
+推荐使用 `assets/image-branch-template.json`（schema 1.3）；`gates.b_previews_generated` 表示两张预览实际生成，`gates.b_variant_confirmed` 表示用户看过预览并批准具体生成范围。不得在确认前为默认 both 预置已批准状态。
+
+## v2.3 单一事实源、检查点、版本隔离
+
+- B 正式交付推荐路径：`builds/<build_id>/B1/slide-01.png`、`B1/images.zip`、`B1/deck-image-only.pptx`（B2 同理）；**两个版本独立哈希、独立 QA 和独立回退标记**。 `artifacts.variant_deliveries.B1/B2` 分别记 `images_dir/images_zip/pptx`；B 的通用 `artifacts.pptx` 不能代替 both 的两套。
+- A 正式交付：`artifacts.pptx/pdf/preview_dir/overview_image`，必须基于同一 `build_id`。PDF 不声称包含动画；原生编辑和实播状态另行记录。
+- 每个审批 Gate 和每批已完成页面之后**回读** `project.json` 与本批实物路径；记录哈希、源图、QA、`checkpoint.last_saved_at`、`verified_files`、下一任务。仅文件路径字符串不等于存在验证，且沙箱下载链接不是长期持久备份。
+- 重入时先查看并验证实物，再恢复最近一次真实通过的节点；对损坏、缺失或不匹配的派生文件按依赖链局部重建。用户已确认的决策不得重新问。
+- 修改 B2 一页，仅重制 B2 对应页面、重打该版本 ZIP/PPTX，B1 不自动重制。必要时保留上一套完整有效版本供回滚。
+- 文字、字体和安全区最终以真实输出渲染核对：PPTX 图片等比例放置，禁止意外裁切、黑条、黑块和拉伸。
