@@ -12,7 +12,8 @@
     "slide_count": 2,
     "animation_requested": true,
     "target_app": "PowerPoint / WPS (未验证)",
-    "editable_requested": true
+    "editable_requested": true,
+    "complexity": "ordinary"
   },
   "styleboards": [],
   "selected_style_id": null,
@@ -20,7 +21,10 @@
     "brief_ready": true,
     "style_selected": false,
     "artwork_approved": false,
-    "branch_selected": true
+    "branch_selected": true,
+    "outline_approved": false,
+    "animation_downgrade_approved": false,
+    "unverified_critical_approved": false
   },
   "design_spec": {
     "fonts": [],

@@ -55,14 +55,22 @@ def validate(project):
         # A is correct for animation OR element-level editability; it can have no animation.
         if wants_animation is False and wants_edit is not True:
             errors.append('A requires animation OR element-level editability')
+        if project.get('schema_version') == '1.2':
+            complexity = project['brief'].get('complexity')
+            if complexity not in ('ordinary', 'important'):
+                errors.append('A v1.2 brief.complexity must be ordinary or important')
+            if complexity == 'important' and stage in STAGES_A[1:] and not gates.get('outline_approved'):
+                errors.append('important A requires outline_approved before visual exploration')
         if stage in STAGES_A[2:] and not gates.get('style_selected') and project['mode'] not in ('review',):
             errors.append('A selected+ stage requires gates.style_selected, unless review')
         if stage in STAGES_A[5:] and not gates.get('artwork_approved') and project['mode'] not in ('review',):
             errors.append('A approved+ stage requires gates.artwork_approved, unless review')
         if gates.get('style_selected') and not project.get('selected_style_id'):
             errors.append('selected style gate requires selected_style_id')
-        if gates.get('style_selected') and len(project.get('styleboards', [])) < 8 and not project.get('preview_waiver'):
-            errors.append('style_selected requires 8 styleboards or explicit preview_waiver')
+        expected_previews = 16 if project.get('schema_version') == '1.2' and project['brief'].get('complexity') == 'important' else 8
+        waiver = bool(project.get('preview_waiver')) if project.get('schema_version') != '1.2' else False
+        if gates.get('style_selected') and len(project.get('styleboards', [])) < expected_previews and not waiver:
+            errors.append(f'style_selected requires {expected_previews} styleboard images')
         if stage in STAGES_A[5:] and not all(s.get('reference_image') for s in slides) and project['mode'] not in ('review',):
             errors.append('A approved+ stage requires reference_image for every slide')
     if branch == 'B':
@@ -142,6 +150,8 @@ def validate(project):
                             errors.append(f'B {variant} image for {sid} must be stored under {variant}/')
                         if checks.get(variant) != 'pass':
                             errors.append(f'B image_delivered requires {variant} QA pass for {sid}')
+                        if project.get('schema_version') == '1.3' and isinstance(path, str) and not path.lower().endswith('.png'):
+                            errors.append(f'B {variant} image for {sid} must be PNG')
                         if not isinstance(base, str) or not base:
                             errors.append(f'B image_delivered requires prompt_base for {sid}')
                         elif prompts.get(variant) != base + (('\n' + B2_QUALITY_CONSTRAINT) if variant == 'B2' else ''):
@@ -161,6 +171,11 @@ def validate(project):
             qa = slide.get('qa') or {}
             if qa.get('static') != 'pass' or qa.get('edit') != 'pass':
                 errors.append(f'A delivered requires static/edit QA pass for {slide.get("id")}')
+            if project['brief'].get('animation_requested') is True:
+                if qa.get('animation') != 'pass' and not gates.get('animation_downgrade_approved'):
+                    errors.append(f'A delivered requires implemented animation or approved downgrade for {slide.get("id")}')
+                if qa.get('target_playback') not in ('pass',) and not gates.get('unverified_critical_approved'):
+                    errors.append(f'A delivered unverified playback requires explicit approval for {slide.get("id")}')
     ids = set()
     for idx, slide in enumerate(slides, 1):
         name = f'slides[{idx}]'

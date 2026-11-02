@@ -164,6 +164,31 @@ class SkillValidationTest(unittest.TestCase):
         manifest['artifacts']['variant_deliveries']['B1']['images_zip'] = None
         self.assertTrue(any('images_zip' in x for x in load('validate_project').validate(manifest)))
 
+    def test_important_a_outline_gate_and_16_styleboards(self):
+        manifest = json.loads((ROOT / 'assets/project-template.json').read_text(encoding='utf8'))
+        manifest['brief']['complexity'] = 'important'
+        manifest['stage'] = 'styles'
+        self.assertTrue(any('outline_approved' in x for x in load('validate_project').validate(manifest)))
+        manifest['gates']['outline_approved'] = True
+        manifest['stage'] = 'selected'
+        manifest['gates']['style_selected'] = True
+        manifest['selected_style_id'] = 'style-01'
+        manifest['styleboards'] = [f'style-{i:02d}.png' for i in range(8)]
+        self.assertTrue(any('16 styleboard' in x for x in load('validate_project').validate(manifest)))
+        manifest['styleboards'] = [f'style-{i:02d}.png' for i in range(16)]
+        self.assertEqual(load('validate_project').validate(manifest), [])
+
+    def test_b_delivered_requires_real_png_paths(self):
+        manifest = self.confirmed(self.b_manifest(), 'B1')
+        manifest['stage'] = 'image_delivered'
+        for slide in manifest['slides']:
+            slide['prompt_base'] = f'Page: {slide["id"]}'
+            slide['variant_images']['B1'] = f'B1/{slide["id"]}.jpg'
+            slide['variant_qa']['B1'] = 'pass'
+            slide['variant_prompts']['B1'] = slide['prompt_base']
+        self.add_variant_deliveries(manifest, 'B1')
+        self.assertTrue(any('must be PNG' in x for x in load('validate_project').validate(manifest)))
+
     def test_a_delivery_requires_pdf_and_overview(self):
         manifest = json.loads((ROOT / 'assets/project-template.json').read_text(encoding='utf8'))
         manifest['stage'] = 'delivered'
