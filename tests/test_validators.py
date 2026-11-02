@@ -49,7 +49,7 @@ class SkillValidationTest(unittest.TestCase):
         manifest['gates']['b_previews_generated'] = True
         manifest['b_previews']['prompt_base'] = '同一页：代表性内容'
         manifest['b_previews']['prompt_B1'] = '同一页：代表性内容'
-        manifest['b_previews']['prompt_B2'] = '同一页：代表性内容' + '\\n' + load('validate_project').B2_QUALITY_CONSTRAINT
+        manifest['b_previews']['prompt_B2'] = '同一页：代表性内容' + '\n' + load('validate_project').B2_QUALITY_CONSTRAINT
         return manifest
 
     def confirmed(self, manifest, mode='both'):
@@ -100,7 +100,7 @@ class SkillValidationTest(unittest.TestCase):
             for variant in ('B1', 'B2'):
                 slide['variant_images'][variant] = f"{variant}/{slide['id']}.png"
                 slide['variant_qa'][variant] = 'pass'
-                slide['variant_prompts'][variant] = slide['prompt_base'] + ('\\n' + load('validate_project').B2_QUALITY_CONSTRAINT if variant == 'B2' else '')
+                slide['variant_prompts'][variant] = slide['prompt_base'] + ('\n' + load('validate_project').B2_QUALITY_CONSTRAINT if variant == 'B2' else '')
         self.add_variant_deliveries(manifest)
         self.assertEqual(load('validate_project').validate(manifest), [])
 
@@ -122,7 +122,7 @@ class SkillValidationTest(unittest.TestCase):
             slide['prompt_base'] = f"Page: {slide['id']}"
             slide['variant_images']['B2'] = f"B2/{slide['id']}.png"
             slide['variant_qa']['B2'] = 'pass'
-            slide['variant_prompts']['B2'] = slide['prompt_base'] + '\\n' + 'over-sharpened HDR'
+            slide['variant_prompts']['B2'] = slide['prompt_base'] + '\n' + 'over-sharpened HDR'
         self.assertTrue(any('prompt policy mismatch' in e for e in load('validate_project').validate(manifest)))
 
     def test_legacy_v21_b_manifest_is_accepted(self):

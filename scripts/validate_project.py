@@ -107,7 +107,7 @@ def validate(project):
                     if not isinstance(base_prompt, str) or not base_prompt:
                         errors.append('B v1.3 paired preview requires shared prompt_base')
                     elif (previews.get('prompt_B1') != base_prompt or
-                          previews.get('prompt_B2') != base_prompt + '\\n' + B2_QUALITY_CONSTRAINT):
+                          previews.get('prompt_B2') != base_prompt + '\n' + B2_QUALITY_CONSTRAINT):
                         errors.append('B paired preview prompt policy mismatch')
             if stage in ('route', 'b_preview', 'b_await_confirmation'):
                 if gates.get('b_variant_confirmed') or mode is not None:
@@ -144,7 +144,7 @@ def validate(project):
                             errors.append(f'B image_delivered requires {variant} QA pass for {sid}')
                         if not isinstance(base, str) or not base:
                             errors.append(f'B image_delivered requires prompt_base for {sid}')
-                        elif prompts.get(variant) != base + (('\\n' + B2_QUALITY_CONSTRAINT) if variant == 'B2' else ''):
+                        elif prompts.get(variant) != base + (('\n' + B2_QUALITY_CONSTRAINT) if variant == 'B2' else ''):
                             errors.append(f'B {variant} prompt policy mismatch for {sid}')
     if project.get('schema_version') in ('1.2', '1.3') and stage in ('delivered', 'image_delivered'):
         if not isinstance(project.get('build_id'), str) or not project['build_id']:
