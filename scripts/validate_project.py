@@ -46,8 +46,15 @@ def validate(project):
     if branch == 'A':
         if stage in STAGES_B:
             errors.append('A cannot enter image-only stages')
-        if project['brief'].get('animation_requested') is not True:
-            errors.append('A must have animation_requested=true')
+        wants_animation = project['brief'].get('animation_requested')
+        wants_edit = project['brief'].get('editable_requested')
+        if not isinstance(wants_animation, bool):
+            errors.append('A requires boolean brief.animation_requested')
+        if project.get('schema_version') == '1.2' and not isinstance(wants_edit, bool):
+            errors.append('A schema 1.2 requires boolean brief.editable_requested')
+        # A is correct for animation OR element-level editability; it can have no animation.
+        if wants_animation is False and wants_edit is not True:
+            errors.append('A requires animation OR element-level editability')
         if stage in STAGES_A[2:] and not gates.get('style_selected') and project['mode'] not in ('review',):
             errors.append('A selected+ stage requires gates.style_selected, unless review')
         if stage in STAGES_A[5:] and not gates.get('artwork_approved') and project['mode'] not in ('review',):
@@ -65,6 +72,8 @@ def validate(project):
             errors.append('B requires mode=image')
         if project['brief'].get('animation_requested') is not False:
             errors.append('B must have animation_requested=false')
+        if project.get('schema_version') == '1.3' and project['brief'].get('editable_requested') is not False:
+            errors.append('B schema 1.3 requires editable_requested=false')
         if gates.get('style_selected') or gates.get('artwork_approved'):
             errors.append('B must not claim A-only style/artwork gates')
         # Preserve validation of work already started under v2.1; do not retroactively
@@ -77,8 +86,8 @@ def validate(project):
                     if item.get('qa', {}).get('static') != 'pass':
                         errors.append(f'legacy B image_delivered requires static QA pass for {item.get("id")}')
         else:
-            if project.get('schema_version') != '1.2':
-                errors.append('B workflow requires schema_version 1.2 (or 1.1 legacy)')
+            if project.get('schema_version') not in ('1.2', '1.3'):
+                errors.append('B workflow requires schema_version 1.3 (or older 1.1/1.2 legacy)')
             previews = project.get('b_previews')
             if not isinstance(previews, dict):
                 errors.append('B requires b_previews object')
@@ -93,6 +102,13 @@ def validate(project):
                     errors.append('B paired previews require the same slide_id and separate B1/B2 image paths')
                 if previews.get('B1') and previews.get('B1') == previews.get('B2'):
                     errors.append('B paired previews must be distinct image paths')
+                if project.get('schema_version') == '1.3':
+                    base_prompt = previews.get('prompt_base')
+                    if not isinstance(base_prompt, str) or not base_prompt:
+                        errors.append('B v1.3 paired preview requires shared prompt_base')
+                    elif (previews.get('prompt_B1') != base_prompt or
+                          previews.get('prompt_B2') != base_prompt + '\\n' + B2_QUALITY_CONSTRAINT):
+                        errors.append('B paired preview prompt policy mismatch')
             if stage in ('route', 'b_preview', 'b_await_confirmation'):
                 if gates.get('b_variant_confirmed') or mode is not None:
                     errors.append('B must wait for user confirmation after paired preview before choosing a variant')
@@ -101,6 +117,17 @@ def validate(project):
                     errors.append('B cannot batch generate before explicit B1/B2/both user confirmation')
             if stage == 'image_delivered' and mode in B_OPTIONS:
                 variants = ('B1','B2') if mode == 'both' else (mode,)
+                if project.get('schema_version') == '1.3':
+                    manifest = project.get('artifacts') or {}
+                    variant_deliveries = manifest.get('variant_deliveries') or {}
+                    for variant in variants:
+                        delivery = variant_deliveries.get(variant) or {}
+                        for key in ('images_dir', 'images_zip', 'pptx'):
+                            value = delivery.get(key)
+                            if not isinstance(value, str) or not value:
+                                errors.append(f'B image_delivered requires {variant} {key} in variant_deliveries')
+                            elif not value.replace('\\\\', '/').startswith(variant + '/'):
+                                errors.append(f'B {variant} {key} must be stored under {variant}/')
                 for slide in slides:
                     sid = slide.get('id')
                     base = slide.get('prompt_base')
@@ -119,6 +146,21 @@ def validate(project):
                             errors.append(f'B image_delivered requires prompt_base for {sid}')
                         elif prompts.get(variant) != base + (('\\n' + B2_QUALITY_CONSTRAINT) if variant == 'B2' else ''):
                             errors.append(f'B {variant} prompt policy mismatch for {sid}')
+    if project.get('schema_version') in ('1.2', '1.3') and stage in ('delivered', 'image_delivered'):
+        if not isinstance(project.get('build_id'), str) or not project['build_id']:
+            errors.append('delivered manifest requires nonempty build_id')
+        checkpoint = project.get('checkpoint') or {}
+        if not isinstance(checkpoint.get('verified_files'), list):
+            errors.append('delivered manifest requires checkpoint.verified_files list')
+    if branch == 'A' and project.get('schema_version') == '1.2' and stage == 'delivered':
+        artifacts = project.get('artifacts') or {}
+        for key in ('pptx', 'pdf', 'preview_dir', 'overview_image'):
+            if not artifacts.get(key):
+                errors.append(f'A delivered requires artifacts.{key}')
+        for slide in slides:
+            qa = slide.get('qa') or {}
+            if qa.get('static') != 'pass' or qa.get('edit') != 'pass':
+                errors.append(f'A delivered requires static/edit QA pass for {slide.get("id")}')
     ids = set()
     for idx, slide in enumerate(slides, 1):
         name = f'slides[{idx}]'

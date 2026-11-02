@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.1",
+  "schema_version": "1.2",
   "project_id": "example-deck",
   "build_id": "draft-001",
   "mode": "editable",
@@ -11,7 +11,8 @@
     "aspect_ratio": "16:9",
     "slide_count": 2,
     "animation_requested": true,
-    "target_app": "PowerPoint / WPS (未验证)"
+    "target_app": "PowerPoint / WPS (未验证)",
+    "editable_requested": true
   },
   "styleboards": [],
   "selected_style_id": null,
@@ -97,16 +98,21 @@
     "pptx": null,
     "pdf": null,
     "preview_dir": null,
-    "qa_report": null
+    "qa_report": null,
+    "overview_image": null,
+    "source_package": null
   },
   "checkpoint": {
     "last_saved_at": null,
     "verified_files": [],
-    "next_action": "制作至少8套实际可见风格样板"
+    "next_action": "制作至少8套实际可见风格样板",
+    "last_batch_id": null,
+    "last_verified_build_id": null
   },
   "notes": [
     "此文件仅是工程状态结构示例，不表示已经生成或用户确认任何图片",
-    "示例已选 A；真正新建任务必须先问 A/B。B 项目使用 image-branch-template.json。"
+    "示例已选 A；真正新建任务必须先问 A/B。B 项目使用 image-branch-template.json。",
+    "v2.3: A 适用于动画 OR 编辑性；无动画但需要逐元素编辑仍使用A。交付阶段须真实存在PPTX、PDF、逐页预览和总览图。"
   ],
   "workflow_branch": "A"
 }

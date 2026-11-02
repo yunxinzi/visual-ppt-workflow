@@ -47,6 +47,9 @@ class SkillValidationTest(unittest.TestCase):
             'B2': 'previews/B2.png'
         }
         manifest['gates']['b_previews_generated'] = True
+        manifest['b_previews']['prompt_base'] = '同一页：代表性内容'
+        manifest['b_previews']['prompt_B1'] = '同一页：代表性内容'
+        manifest['b_previews']['prompt_B2'] = '同一页：代表性内容' + '\\n' + load('validate_project').B2_QUALITY_CONSTRAINT
         return manifest
 
     def confirmed(self, manifest, mode='both'):
@@ -78,6 +81,16 @@ class SkillValidationTest(unittest.TestCase):
         self.assertTrue(any('wait for user confirmation' in err for err in load('validate_project').validate(manifest)))
         self.assertEqual(load('validate_project').validate(self.confirmed(self.b_manifest())), [])
 
+    def add_variant_deliveries(self, manifest, mode='both'):
+        variants = ('B1', 'B2') if mode == 'both' else (mode,)
+        for variant in variants:
+            manifest['artifacts']['variant_deliveries'][variant] = {
+                'images_dir': f'{variant}/',
+                'images_zip': f'{variant}/images.zip',
+                'pptx': f'{variant}/deck-image-only.pptx',
+            }
+        return manifest
+
     def test_image_branch_delivered_requires_both_decks_and_qa(self):
         manifest = self.confirmed(self.b_manifest())
         manifest['stage'] = 'image_delivered'
@@ -88,6 +101,7 @@ class SkillValidationTest(unittest.TestCase):
                 slide['variant_images'][variant] = f"{variant}/{slide['id']}.png"
                 slide['variant_qa'][variant] = 'pass'
                 slide['variant_prompts'][variant] = slide['prompt_base'] + ('\\n' + load('validate_project').B2_QUALITY_CONSTRAINT if variant == 'B2' else '')
+        self.add_variant_deliveries(manifest)
         self.assertEqual(load('validate_project').validate(manifest), [])
 
     def test_one_branch_only_needs_its_own_deck(self):
@@ -98,6 +112,7 @@ class SkillValidationTest(unittest.TestCase):
             slide['variant_images']['B1'] = f"B1/{slide['id']}.png"
             slide['variant_qa']['B1'] = 'pass'
             slide['variant_prompts']['B1'] = slide['prompt_base']
+        self.add_variant_deliveries(manifest, 'B1')
         self.assertEqual(load('validate_project').validate(manifest), [])
 
     def test_b2_constraint_has_to_be_exact(self):
@@ -116,10 +131,49 @@ class SkillValidationTest(unittest.TestCase):
         manifest['stage'] = 'image_generate'
         self.assertEqual(load('validate_project').validate(manifest), [])
 
-    def test_a_animation_requirement_mismatch(self):
+    def test_a_without_animation_but_editable_is_valid(self):
         manifest = json.loads((ROOT / 'assets/project-template.json').read_text(encoding='utf8'))
         manifest['brief']['animation_requested'] = False
-        self.assertTrue(any('animation_requested' in x for x in load('validate_project').validate(manifest)))
+        self.assertEqual(load('validate_project').validate(manifest), [])
+
+    def test_a_requires_animation_or_editability(self):
+        manifest = json.loads((ROOT / 'assets/project-template.json').read_text(encoding='utf8'))
+        manifest['brief']['animation_requested'] = False
+        manifest['brief']['editable_requested'] = False
+        self.assertTrue(any('animation OR element-level' in x for x in load('validate_project').validate(manifest)))
+
+    def test_b_editability_requirement_mismatch(self):
+        manifest = self.b_manifest()
+        manifest['brief']['editable_requested'] = True
+        self.assertTrue(any('editable_requested=false' in x for x in load('validate_project').validate(manifest)))
+
+    def test_b_preview_prompt_pair_must_share_base(self):
+        manifest = self.preview_ready(self.b_manifest())
+        manifest['b_previews']['prompt_B2'] = '强制摄影，改变画风'
+        self.assertTrue(any('preview prompt policy' in x for x in load('validate_project').validate(manifest)))
+
+    def test_b_delivery_requires_zip_and_flattened_pptx(self):
+        manifest = self.confirmed(self.b_manifest(), 'B1')
+        manifest['stage'] = 'image_delivered'
+        for slide in manifest['slides']:
+            slide['prompt_base'] = f'Page: {slide["id"]}'
+            slide['variant_images']['B1'] = f'B1/{slide["id"]}.png'
+            slide['variant_qa']['B1'] = 'pass'
+            slide['variant_prompts']['B1'] = slide['prompt_base']
+        self.add_variant_deliveries(manifest, 'B1')
+        manifest['artifacts']['variant_deliveries']['B1']['images_zip'] = None
+        self.assertTrue(any('images_zip' in x for x in load('validate_project').validate(manifest)))
+
+    def test_a_delivery_requires_pdf_and_overview(self):
+        manifest = json.loads((ROOT / 'assets/project-template.json').read_text(encoding='utf8'))
+        manifest['stage'] = 'delivered'
+        manifest['gates']['style_selected'] = True
+        manifest['gates']['artwork_approved'] = True
+        manifest['selected_style_id'] = 'style-01'
+        manifest['styleboards'] = ['style-' + str(i) for i in range(8)]
+        for slide in manifest['slides']:
+            slide['reference_image'] = slide['id'] + '.png'
+        self.assertTrue(any('overview_image' in x for x in load('validate_project').validate(manifest)))
 
     def test_b_animation_requirement_mismatch(self):
         manifest = json.loads((ROOT / 'assets/image-branch-template.json').read_text(encoding='utf8'))
