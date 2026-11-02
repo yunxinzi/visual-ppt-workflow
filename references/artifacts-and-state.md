@@ -1,5 +1,7 @@
 # 文件与状态约定
 
+**分支说明：** 下方含 styleboards/reference/backgrounds/foregrounds 的目录结构仅对 A 适用。B 只需要 `project.json`、`images/slide-XX.png`、轻量 QA 和必要的可选封装文件，不强制建立 A 的目录。见 [B 分支](image-fast-path.md)。
+
 ## 推荐项目目录（示例）
 
 ```
@@ -18,8 +20,9 @@ workspace/<project_id>/
 素材引用用相对路径；同一构建版本绑定同一 `build_id`。保存每个产物的 SHA-256，禁止拿旧 PDF/图片冒充最新 PPTX 的导出。可选 `manifest` 字段记录 `build_id`, `source_build_id`, `renderer`, `export_timestamp`, `actual_verification`。
 
 ## 各模式交付
+- `workflow_branch=B`: 默认交付整套有序高清图片；除非用户要求，否则不应生成 PPTX/PDF，也不需要 A 的分层工程包。
 - `editable`: 真实可编辑 `.pptx`、全页预览；按需 `.pdf`、可重建素材和动画描述。
-- `image`: 纯图片 `.pptx` 与逐页图片（按需 PDF），必须明确“不能分层编辑”，禁止夸大。
+- `image`（A 的图片模式或 B）：逐页图片是 B 的默认交付；仅在明确需要时封装为纯图片 `.pptx`（按需 PDF），必须明确“不能分层编辑”，禁止夸大。
 - `hybrid`: `.pptx` 与按页的编辑性边界表，明确 `flattened` 素材。
 - `pdf-only`: PDF 与按需预览，不声称 PPTX 已有。
 - `review`: QA报告、已修改文件和差异说明；修改后仍执行受影响页面验证。
